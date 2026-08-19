@@ -2,68 +2,44 @@
 <html lang="bs">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#121213" />
     <title>WORDLE BA</title>
   </head>
-  <body class="dark min-h-screen bg-slate-950 text-slate-100">
+  <body>
     <div id="app" class="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 sm:px-6">
-      <header class="flex items-center justify-between border-b border-slate-800 py-5">
-        <div class="w-10"></div>
-        <h1 class="font-mono text-xl font-bold tracking-[0.3em] text-slate-100 sm:text-2xl">WORDLE BA</h1>
-        <button class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white" type="button" aria-label="Pomoć">
-          <span aria-hidden="true">?</span>
-        </button>
+      <header class="game-header">
+        <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
+        <h1>WORDLE BA</h1>
+        <button id="stats-button" class="header-icon" type="button" aria-label="Statistika">▥</button>
       </header>
-
-      <main class="flex flex-1 flex-col items-center justify-between gap-8 py-8 sm:py-10">
-        <section class="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label="Tabla za pogađanje">
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-          <div class="grid aspect-square w-[min(15vw,3.5rem)] place-items-center border-2 border-slate-700 bg-slate-900 text-xl font-bold sm:text-2xl"></div>
-        </section>
-
-        <section class="flex w-full max-w-xl flex-col gap-2" aria-label="Virtuelna tastatura">
-          <div class="flex justify-center gap-1 sm:gap-1.5">
-            <button class="key" type="button">Q</button><button class="key" type="button">W</button><button class="key" type="button">E</button><button class="key" type="button">R</button><button class="key" type="button">T</button><button class="key" type="button">Z</button><button class="key" type="button">U</button><button class="key" type="button">I</button><button class="key" type="button">O</button><button class="key" type="button">P</button><button class="key" type="button">Š</button><button class="key" type="button">Đ</button>
-          </div>
-          <div class="flex justify-center gap-1 sm:gap-1.5">
-            <button class="key" type="button">A</button><button class="key" type="button">S</button><button class="key" type="button">D</button><button class="key" type="button">F</button><button class="key" type="button">G</button><button class="key" type="button">H</button><button class="key" type="button">J</button><button class="key" type="button">K</button><button class="key" type="button">L</button><button class="key" type="button">Č</button><button class="key" type="button">Ć</button><button class="key" type="button">Ž</button>
-          </div>
-          <div class="flex justify-center gap-1 sm:gap-1.5">
-            <button class="key key-wide" type="button">Enter</button><button class="key" type="button">Y</button><button class="key" type="button">X</button><button class="key" type="button">C</button><button class="key" type="button">V</button><button class="key" type="button">B</button><button class="key" type="button">N</button><button class="key" type="button">M</button><button class="key key-digraph" type="button">DŽ</button><button class="key key-digraph" type="button">LJ</button><button class="key key-digraph" type="button">NJ</button><button class="key key-wide" type="button" aria-label="Backspace">⌫</button>
-          </div>
+      <main class="game-main">
+        <section id="board" aria-label="Tabla za pogađanje"></section>
+        <p id="message" class="message" role="status" aria-live="polite"></p>
+        <section id="keyboard" aria-label="Virtuelna tastatura">
+          <div class="keyboard-row" data-row="1"></div>
+          <div class="keyboard-row" data-row="2"></div>
+          <div class="keyboard-row" data-row="3"></div>
         </section>
       </main>
     </div>
+    <div id="game-modal" class="modal-backdrop" hidden>
+      <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button id="close-modal" class="modal-close" type="button" aria-label="Zatvori">×</button>
+        <p class="modal-kicker">WORDLE BA</p>
+        <h2 id="modal-title"></h2>
+        <p id="modal-subtitle"></p>
+        <div class="stats-grid">
+          <div><strong id="stat-played">0</strong><span>Odigrano</span></div>
+          <div><strong id="stat-win-rate">0%</strong><span>Pobjede %</span></div>
+          <div><strong id="stat-streak">0</strong><span>Trenutni niz</span></div>
+          <div><strong id="stat-best">0</strong><span>Najbolji niz</span></div>
+        </div>
+        <div class="countdown-wrap"><span>Sljedeća riječ za</span><strong id="countdown">00:00:00</strong></div>
+        <button id="share-button" class="share-button" type="button">PODIJELI REZULTAT</button>
+      </section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

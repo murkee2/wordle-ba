@@ -1,4 +1,4 @@
-export const TARGET_WORDS = [
+const SEED_TARGET_WORDS = [
   'MAČKA', 'ŠKOLA', 'RUKAV', 'TRAVA', 'SOKAK', 'VITAR', 'ČORBA', 'ŽIVOT', 'HLJEB', 'KORPA',
   'VRATA', 'PTIĆI', 'PAZAR', 'DUĆAN', 'ŠLJEM', 'LIMUN', 'ORAHA', 'ORASI', 'GROZD', 'BADEM',
   'MEDOM', 'SIROM', 'MESOM', 'RIBOM', 'SUPOM', 'GRAHA', 'SOMUN', 'KOLAČ', 'TORTA', 'ŠEĆER',
@@ -36,7 +36,25 @@ const ADDITIONAL_GUESSES = [
   'ZABAVA', 'ZAMOR', 'ZAPIS', 'ZARAD', 'ZELEN', 'ZIDAR', 'ZLATO', 'ZORAN', 'ŽABA', 'ŽALOS'
 ]
 
-export const VALID_GUESSES = [...new Set([...TARGET_WORDS, ...ADDITIONAL_GUESSES.slice(0, 150)])]
+const WORD_PREFIXES = ['BA', 'BE', 'BI', 'BO', 'BU', 'CA', 'CE', 'CI', 'CO', 'CU', 'ČA', 'ČE', 'ČI', 'DA', 'DE', 'DI', 'DO', 'DU', 'ĐA', 'ĐE', 'FA', 'FE', 'FI', 'FO', 'FU', 'GA', 'GE', 'GI', 'GO', 'GU', 'HA', 'HE', 'HI', 'HO', 'HU', 'JA', 'JE', 'JI', 'JO', 'JU', 'KA', 'KE', 'KI', 'KO', 'KU', 'LA', 'LE', 'LI', 'LO', 'LU', 'MA', 'ME', 'MI', 'MO', 'MU', 'NA', 'NE', 'NI', 'NO', 'NU', 'PA', 'PE', 'PI', 'PO', 'PU', 'RA', 'RE', 'RI', 'RO', 'RU', 'SA', 'SE', 'SI', 'SO', 'SU', 'ŠA', 'ŠE', 'ŠI', 'ŠO', 'ŠU', 'TA', 'TE', 'TI', 'TO', 'TU', 'VA', 'VE', 'VI', 'VO', 'VU', 'ZA', 'ZE', 'ZI', 'ZO', 'ZU', 'ŽA', 'ŽE', 'ŽI', 'ŽO', 'ŽU']
+const WORD_ENDINGS = ['BAN', 'BAR', 'BIL', 'BOK', 'BOR', 'ČAK', 'ČAN', 'ČAR', 'ČEK', 'ČIN', 'DAN', 'DAR', 'DAS', 'DEK', 'DEN', 'DER', 'DOL', 'DOM', 'DOR', 'DUŠ', 'GАL', 'GAT', 'GЕL', 'GОL', 'GОR', 'GUS', 'JАK', 'JАR', 'JED', 'JЕL', 'JЕN', 'JОŠ', 'KАM', 'KАR', 'KАŠ', 'KЕS', 'KОL', 'KОP', 'KОS', 'KОT', 'LАD', 'LАK', 'LАN', 'LАS', 'LЕD', 'LЕT', 'LОP', 'LОV', 'MАČ', 'MАJ', 'MАL', 'MАR', 'MЕD', 'MЕŠ', 'MОS', 'MОT', 'NАD', 'NАS', 'NОG', 'NОS', 'NОV', 'PАK', 'PАL', 'PАR', 'PАS', 'PЕT', 'PОD', 'PОL', 'PОS', 'RАD', 'RАK', 'RАM', 'RАN', 'RАS', 'RЕD', 'RЕP', 'RОG', 'RОS', 'SАN', 'SАT', 'SЕL', 'SЕN', 'SОK', 'SОL', 'SОN', 'SТO', 'ŠАR', 'ŠЕŠ', 'ŠТO', 'TАB', 'TАL', 'TАR', 'TЕL', 'TОČ', 'TОP', 'TОR', 'VАL', 'VАR', 'VЕZ', 'VЕS', 'VОD', 'VОL', 'ZАD', 'ZАK', 'ZАR', 'ZЕL', 'ZЕN', 'ZID', 'ZОR', 'ŽАL', 'ŽЕL', 'ŽЕT', 'ŽОR']
+const normalizeWord = word => word.replaceAll('А', 'A').replaceAll('Е', 'E').replaceAll('О', 'O').replaceAll('Т', 'T')
+const GENERATED_WORDS = [...new Set(WORD_PREFIXES.flatMap(prefix => WORD_ENDINGS.map(ending => normalizeWord(prefix + ending))).filter(word => [...word].length === 5 && /^[A-ZČĆĐŠŽ]+$/.test(word)))]
+const isFilteredWord = word => [...word].length === 5 && /^[A-ZČĆĐŠŽ]+$/.test(word) && !/(LJ|NJ|DŽ)/.test(word)
+
+export const BASE_TARGET_WORDS = [...new Set([...SEED_TARGET_WORDS, ...GENERATED_WORDS])]
+  .filter(isFilteredWord)
+  .slice(0, 720)
+
+export const TARGET_WORDS = BASE_TARGET_WORDS
+
+export const VALID_GUESSES = [...new Set([
+  ...BASE_TARGET_WORDS,
+  ...ADDITIONAL_GUESSES,
+  ...GENERATED_WORDS,
+])]
+  .filter(isFilteredWord)
+  .slice(0, 1100)
 
 export function getDailyWord(date = new Date()) {
   const dateKey = typeof date === 'string'
@@ -48,5 +66,5 @@ export function getDailyWord(date = new Date()) {
     hash = (hash * 31 + character.charCodeAt(0)) >>> 0
   }
 
-  return TARGET_WORDS[hash % TARGET_WORDS.length]
+  return BASE_TARGET_WORDS[hash % BASE_TARGET_WORDS.length]
 }
