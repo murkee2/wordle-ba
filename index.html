@@ -4,13 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#121213" />
-    <title>WORDLE BA</title>
+    <meta name="description" content="WordleBA — Dnevna igra pogađanja bosanskih riječi od 5 slova. Testiraj svoje znanje svakog dana ili vježbaj u slobodnom modu." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>WordleBA — Bosanska riječ dana</title>
   </head>
   <body class="bg-zinc-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px] text-zinc-100 min-h-screen flex flex-col justify-between">
     <div id="app" class="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 sm:px-6">
       <header class="game-header">
         <a href="#" target="_blank" class="portal-badge px-2.5 py-1 text-xs font-semibold rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition">BosnaDLE <span class="text-emerald-400 text-[10px]">↗</span></a>
-        <h1><span>Wordle</span><b>BA</b></h1>
+        <h1 class="brand-logo"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M6 2v20"/></svg><span>Wordle</span><b>BA</b></h1>
         <div class="header-actions">
           <button id="mode-button" class="mode-badge" type="button" aria-label="Prebaci na slobodnu igru">Dnevno</button>
           <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
@@ -30,7 +32,7 @@
     <div id="game-modal" class="modal-backdrop" hidden>
       <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <button id="close-modal" class="modal-close" type="button" aria-label="Zatvori">×</button>
-        <p class="modal-kicker">WORDLE BA</p>
+        <p class="modal-kicker">WordleBA</p>
         <h2 id="modal-title"></h2>
         <p id="modal-subtitle"></p>
         <div class="stats-grid">
@@ -47,7 +49,7 @@
     <div id="help-modal" class="modal-backdrop" hidden>
       <section class="game-modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
         <button class="modal-close" type="button" data-close-modal="help-modal" aria-label="Zatvori">×</button>
-        <p class="modal-kicker">WORDLE BA</p>
+        <p class="modal-kicker">WordleBA</p>
         <h2 id="help-title">Kako igrati</h2>
         <p>Pogodi riječ od 5 slova u najviše 6 pokušaja.</p>
         <div class="help-examples">

@@ -223,7 +223,7 @@ function openResultModal() {
 function openStatsModal() {
   const stats = readStats()
   document.querySelector('#modal-title').textContent = 'STATISTIKA'
-  document.querySelector('#modal-subtitle').textContent = 'Tvoj Wordle BA učinak'
+  document.querySelector('#modal-subtitle').textContent = 'WordleBA statistika'
   document.querySelector('#stat-played').textContent = stats.played
   document.querySelector('#stat-win-rate').textContent = `${stats.played ? Math.round((stats.wins / stats.played) * 100) : 0}%`
   document.querySelector('#stat-streak').textContent = stats.streak
@@ -251,7 +251,7 @@ function closeModal(id) {
 function shareResult() {
   const dateLabel = new Intl.DateTimeFormat('bs-BA').format(new Date(`${today}T12:00:00`))
   const rows = guesses.map(({ result }) => result.map(status => status === 'correct' ? '🟩' : status === 'present' ? '🟨' : '⬛').join('')).join('\n')
-  const text = `Wordle BA - ${dateLabel} ${gameStatus === GAME_STATUS.WON ? `${guesses.length}/6` : 'X/6'}\n${rows}`
+  const text = `WordleBA (${dateLabel}) ${gameStatus === GAME_STATUS.WON ? `${guesses.length}/6` : 'X/6'}\n${rows}`
   navigator.clipboard?.writeText(text).then(() => showMessage('Kopirano u međuspremnik!')).catch(() => showMessage(text))
 }
 
