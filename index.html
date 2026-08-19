@@ -6,18 +6,15 @@
     <meta name="theme-color" content="#121213" />
     <title>WORDLE BA</title>
   </head>
-  <body>
+  <body class="bg-zinc-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:20px_20px] text-zinc-100 min-h-screen flex flex-col justify-between">
     <div id="app" class="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 sm:px-6">
       <header class="game-header">
-        <div class="brand-group">
-          <h1><span>Wordle</span><b>BA</b></h1>
-          <a href="#" target="_blank" class="portal-badge">BosnaDLE <span>Portal ↗</span></a>
-        </div>
-        <button id="mode-button" class="mode-badge" type="button" aria-label="Prebaci na slobodnu igru">Dnevno</button>
+        <a href="#" target="_blank" class="portal-badge px-2.5 py-1 text-xs font-semibold rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition">BosnaDLE <span class="text-emerald-400 text-[10px]">↗</span></a>
+        <h1><span>Wordle</span><b>BA</b></h1>
         <div class="header-actions">
+          <button id="mode-button" class="mode-badge" type="button" aria-label="Prebaci na slobodnu igru">Dnevno</button>
           <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
           <button id="stats-button" class="header-icon" type="button" aria-label="Statistika">▥</button>
-          <button id="reset-button" class="header-icon" type="button" aria-label="Nova igra">↻</button>
         </div>
       </header>
       <main class="game-main">

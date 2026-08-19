@@ -20,6 +20,8 @@ let guesses = []
 let currentGuess = ''
 let gameStatus = GAME_STATUS.IN_PROGRESS
 let isSubmitting = false
+const keyboardLetterStatuses = {}
+const statusPriority = { absent: 1, present: 2, correct: 3 }
 
 function readStats() {
   try { return JSON.parse(localStorage.getItem(STATS_KEY)) ?? { played: 0, wins: 0, streak: 0, bestStreak: 0 } }
@@ -27,7 +29,13 @@ function readStats() {
 }
 
 function resetKeyboard() {
-  keyboard.querySelectorAll('.key').forEach(button => button.classList.remove('key-correct', 'key-present', 'key-absent'))
+  Object.keys(keyboardLetterStatuses).forEach(letter => delete keyboardLetterStatuses[letter])
+  keyboard.querySelectorAll('.key').forEach(button => button.classList.remove(
+    'key-correct', 'key-present', 'key-absent',
+    'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600',
+    'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'opacity-60',
+  ))
+  keyboard.querySelectorAll('.key').forEach(button => button.classList.add('bg-zinc-700/80', 'text-zinc-100', 'border-zinc-600'))
 }
 
 function createBoard() {
@@ -49,7 +57,7 @@ function createKeyboard() {
   rows.forEach((row, rowIndex) => row.forEach(key => {
     const button = document.createElement('button')
     button.type = 'button'
-    button.className = key.length > 1 ? 'key key-wide' : 'key'
+    button.className = `${key.length > 1 ? 'key key-wide' : 'key'} bg-zinc-700/80 text-zinc-100 border-zinc-600`
     button.dataset.key = key
     button.textContent = key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? 'Enter' : key
     button.setAttribute('aria-label', key === 'BACKSPACE' ? 'Backspace' : button.textContent)
@@ -82,15 +90,19 @@ function renderBoard(animatedRow = -1) {
 }
 
 function updateKeyboard() {
-  const priority = { absent: 1, present: 2, correct: 3 }
-  const statuses = new Map()
   guesses.forEach(({ word, result }) => [...word].forEach((letter, index) => {
-    if (!statuses.has(letter) || priority[result[index]] > priority[statuses.get(letter)]) statuses.set(letter, result[index])
+    const status = result[index]
+    if (!keyboardLetterStatuses[letter] || statusPriority[status] > statusPriority[keyboardLetterStatuses[letter]]) {
+      keyboardLetterStatuses[letter] = status
+    }
   }))
   keyboard.querySelectorAll('.key').forEach(button => {
-    const status = [...button.dataset.key].map(letter => statuses.get(letter)).filter(Boolean).sort((a, b) => priority[b] - priority[a])[0]
-    button.classList.remove('key-correct', 'key-present', 'key-absent')
-    if (status) button.classList.add(`key-${status}`)
+    const status = keyboardLetterStatuses[button.dataset.key]
+    button.classList.remove('key-correct', 'key-present', 'key-absent', 'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600', 'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'opacity-60')
+    button.classList.add('bg-zinc-700/80', 'text-zinc-100', 'border-zinc-600')
+    if (status === 'correct') button.classList.add('key-correct', 'bg-emerald-600', 'border-emerald-600', 'text-white', 'font-bold')
+    if (status === 'present') button.classList.add('key-present', 'bg-amber-600', 'border-amber-600', 'text-white', 'font-bold')
+    if (status === 'absent') button.classList.add('key-absent', 'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'opacity-60')
   })
 }
 
@@ -164,9 +176,9 @@ async function submitGuess() {
   guesses.push({ word, result: evaluateGuess(word, targetWord) })
   currentGuess = ''
   renderBoard(guesses.length - 1)
-  updateKeyboard()
   persistState()
   await new Promise(resolve => window.setTimeout(resolve, 650 + (WORD_LENGTH - 1) * 150))
+  updateKeyboard()
   gameStatus = word === targetWord ? GAME_STATUS.WON : guesses.length === MAX_GUESSES ? GAME_STATUS.LOST : GAME_STATUS.IN_PROGRESS
   isSubmitting = false
   persistState()
@@ -194,7 +206,9 @@ function finishGame() {
 function openResultModal() {
   const stats = readStats()
   document.querySelector('#modal-title').textContent = gameStatus === GAME_STATUS.WON ? 'BRAVO!' : 'KRAJ IGRE'
-  document.querySelector('#modal-subtitle').textContent = gameStatus === GAME_STATUS.WON ? `Pogođeno iz ${guesses.length}/6 pokušaja` : `Tačna riječ je ${targetWord}`
+  document.querySelector('#modal-subtitle').textContent = gameMode === GAME_MODES.FREE
+    ? `Riječ je bila: ${targetWord}`
+    : gameStatus === GAME_STATUS.WON ? `Pogođeno iz ${guesses.length}/6 pokušaja` : `Tačna riječ je ${targetWord}`
   document.querySelector('#stat-played').textContent = stats.played
   document.querySelector('#stat-win-rate').textContent = `${stats.played ? Math.round((stats.wins / stats.played) * 100) : 0}%`
   document.querySelector('#stat-streak').textContent = stats.streak
@@ -202,6 +216,7 @@ function openResultModal() {
   document.querySelector('#share-button').hidden = gameMode !== GAME_MODES.DAILY
   document.querySelector('#new-game-button').hidden = gameMode !== GAME_MODES.FREE
   document.querySelector('.countdown-wrap').hidden = gameMode !== GAME_MODES.DAILY
+  document.querySelector('.stats-grid').hidden = gameMode === GAME_MODES.FREE
   openModal('game-modal')
 }
 
@@ -216,6 +231,7 @@ function openStatsModal() {
   document.querySelector('#share-button').hidden = true
   document.querySelector('#new-game-button').hidden = true
   document.querySelector('.countdown-wrap').hidden = true
+  document.querySelector('.stats-grid').hidden = false
   openModal('game-modal')
 }
 
@@ -259,7 +275,6 @@ document.addEventListener('keydown', event => { if (event.key === 'Enter') handl
 document.querySelector('#share-button').addEventListener('click', shareResult)
 document.querySelector('#stats-button').addEventListener('click', openStatsModal)
 document.querySelector('#new-game-button').addEventListener('click', () => startNewRound(GAME_MODES.FREE))
-document.querySelector('#reset-button').addEventListener('click', () => startNewRound(gameMode))
 document.querySelector('#close-modal').addEventListener('click', () => closeModal('game-modal'))
 document.querySelector('#help-button').addEventListener('click', () => openModal('help-modal'))
 document.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => closeModal(button.dataset.closeModal)))
