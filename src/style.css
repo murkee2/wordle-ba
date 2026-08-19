@@ -487,6 +487,18 @@ body { color: var(--game-text); }
   .key { height: 2.8rem; }
 }
 
+/* Final Wordle state colors and compact tile treatment. */
+.tile { border-radius: 0.75rem; border-color: #27272a; background: rgb(24 24 27 / 40%); transition: transform 100ms ease, background-color 180ms ease, border-color 180ms ease; }
+.tile-filled { transform: scale(1.05); }
+.tile-correct { background: #059669; border-color: #059669; color: white; font-weight: 700; }
+.tile-present { background: #f59e0b; border-color: #f59e0b; color: white; font-weight: 700; }
+.tile-absent { background: #27272a; border-color: #27272a; color: #a1a1aa; font-weight: 700; }
+.key { border-radius: 0.5rem; transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease; }
+.key-correct { background: #059669 !important; border-color: #059669 !important; color: white !important; }
+.key-present { background: #f59e0b !important; border-color: #f59e0b !important; color: white !important; }
+.key-absent { background: #18181b !important; border-color: #18181b !important; color: #71717a !important; opacity: 0.5; }
+.key:active { transform: scale(0.95); }
+
 #spacer {
   height: 88px;
   border-top: 1px solid var(--border);

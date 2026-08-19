@@ -33,7 +33,7 @@ function resetKeyboard() {
   keyboard.querySelectorAll('.key').forEach(button => button.classList.remove(
     'key-correct', 'key-present', 'key-absent',
     'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600',
-    'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'opacity-60',
+    'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'text-white', 'font-bold', 'opacity-60',
   ))
   keyboard.querySelectorAll('.key').forEach(button => button.classList.add('bg-zinc-700/80', 'text-zinc-100', 'border-zinc-600'))
 }
@@ -98,7 +98,7 @@ function updateKeyboard() {
   }))
   keyboard.querySelectorAll('.key').forEach(button => {
     const status = keyboardLetterStatuses[button.dataset.key]
-    button.classList.remove('key-correct', 'key-present', 'key-absent', 'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600', 'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'opacity-60')
+    button.classList.remove('key-correct', 'key-present', 'key-absent', 'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600', 'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'text-white', 'font-bold', 'opacity-60')
     button.classList.add('bg-zinc-700/80', 'text-zinc-100', 'border-zinc-600')
     if (status === 'correct') button.classList.add('key-correct', 'bg-emerald-600', 'border-emerald-600', 'text-white', 'font-bold')
     if (status === 'present') button.classList.add('key-present', 'bg-amber-600', 'border-amber-600', 'text-white', 'font-bold')

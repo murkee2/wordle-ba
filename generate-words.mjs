@@ -10,6 +10,14 @@ const SOURCE_FALLBACKS = [null, 'https://raw.githubusercontent.com/LibreOffice/d
 const LOCAL_SOURCE = process.env.WORD_LIST ?? join(homedir(), 'Desktop', 'bosanske_petoslovne_rijeci.txt')
 const WORD_PATTERN = /^[A-ZČĆĐŠŽ]{5}$/u
 const FORBIDDEN_DIGRAPHS = /LJ|NJ|DŽ/u
+const EXCLUDED_PROPER_NOUNS = new Set([
+  'AHMED', 'ALDIN', 'AMILA', 'AMINA', 'DAMIR', 'DENIS', 'EDINA', 'EMIRA', 'EMINA', 'HARIS', 'JOSIP', 'MARKO', 'SAMIR', 'TAHIR',
+  'ADNAN', 'AHMET', 'AJDIN', 'ALMIR', 'AMELA', 'ANTON', 'ANTUN', 'ARMIN', 'DARIO', 'DARKO', 'DAVID', 'DAVUD', 'DEJAN', 'ELVIR', 'ELVIS',
+  'EMIRА', 'ENVER', 'FARUK', 'HAMZA', 'HASAN', 'IBRAHIM', 'ILHAN', 'ISMET', 'IVANA', 'IVICA', 'JASMIN', 'JOVAN', 'JOSIP', 'JULIA', 'JUSUF',
+  'KEMAL', 'KENAN', 'LEJLA', 'MAIDA', 'MAJDA', 'MARко', 'MARIN', 'MARIO', 'MIRZA', 'MUNIR', 'NADIA', 'NENAD', 'NIKOLA', 'SANJA', 'SELMA', 'SENAD', 'SRĐAN', 'TAMARA', 'VEDAD', 'ZORAN',
+  'BIHAĆ', 'BOSNA', 'DRINA', 'NEUM', 'PARIZ', 'SAVA', 'TUZLA', 'MOSTAR', 'SARAJ', 'SARAJE', 'ZENICA', 'TRAVN', 'VISOK', 'KONJIC', 'FOČA', 'LIVNO', 'GORAŽ', 'JABLAN', 'UNA', 'Neret',
+  'AMERIKA', 'AZIJA', 'EVROPA', 'HRVAT', 'SRBIJ', 'TURSKA', 'ITALI', 'AUSTR', 'DUNAV', 'JADRAN', 'ROMA', 'LONDON',
+])
 
 const CURATED_TARGET_WORDS = [
   'AKORD', 'ALARM', 'ALEJA', 'AMBAR', 'ANĐEO', 'ARENA', 'ARIJA', 'ARHIV', 'ASPIK', 'ATLAS', 'AUTOR', 'AVION', 'AVLIJ',
@@ -65,8 +73,9 @@ const dictionaryTexts = await Promise.all([
 ])
 const localWords = existsSync(LOCAL_SOURCE) ? readFileSync(LOCAL_SOURCE, 'utf8').split(/\r?\n/u) : []
 const dictionaryWords = new Set([...dictionaryTexts.flatMap(parseDictionary), ...localWords.map(word => word.trim().toUpperCase()).filter(word => WORD_PATTERN.test(word) && !FORBIDDEN_DIGRAPHS.test(word))])
-const baseWords = [...new Set(CURATED_TARGET_WORDS.map(word => word.toUpperCase()).filter(word => WORD_PATTERN.test(word) && !FORBIDDEN_DIGRAPHS.test(word)))].sort()
-const validWords = [...new Set([...baseWords, ...dictionaryWords])].sort()
+const isAllowedWord = word => WORD_PATTERN.test(word) && !FORBIDDEN_DIGRAPHS.test(word) && !EXCLUDED_PROPER_NOUNS.has(word)
+const baseWords = [...new Set(CURATED_TARGET_WORDS.map(word => word.toUpperCase()).filter(isAllowedWord))].sort()
+const validWords = [...new Set([...baseWords, ...dictionaryWords])].filter(isAllowedWord).sort()
 
 mkdirSync('src/data', { recursive: true })
 writeFileSync('src/data/words.js', renderModule(baseWords, validWords), 'utf8')
