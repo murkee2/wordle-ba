@@ -1,28 +1,33 @@
 import './style.css'
 import confetti from 'canvas-confetti'
-import { VALID_GUESSES, getDailyWord } from './data/words.js'
-import { evaluateGuess, loadGameState, saveGameState } from './logic/game.js'
+import { VALID_GUESSES, getDailyWord, getRandomWord } from './data/words.js'
+import { GAME_MODES, GAME_STATUS, evaluateGuess, loadGameState, saveGameState, clearGameState } from './logic/game.js'
 
 const STATS_KEY = 'wordle-ba-stats'
+const MODE_KEY = 'wordle-ba-mode'
 const WORD_LENGTH = 5
 const MAX_GUESSES = 6
 const board = document.querySelector('#board')
 const keyboard = document.querySelector('#keyboard')
 const message = document.querySelector('#message')
 const modal = document.querySelector('#game-modal')
-const targetWord = getDailyWord()
+const modeButton = document.querySelector('#mode-button')
 const today = new Date().toISOString().slice(0, 10)
-const storedState = loadGameState()
-const isCurrentGame = storedState?.date === today && storedState?.target === targetWord
 
-let guesses = isCurrentGame && Array.isArray(storedState.guesses) ? storedState.guesses : []
-let currentGuess = isCurrentGame && typeof storedState.currentGuess === 'string' ? storedState.currentGuess : ''
-let gameStatus = isCurrentGame && ['playing', 'won', 'lost'].includes(storedState.status) ? storedState.status : 'playing'
+let gameMode = localStorage.getItem(MODE_KEY) === GAME_MODES.FREE ? GAME_MODES.FREE : GAME_MODES.DAILY
+let targetWord = ''
+let guesses = []
+let currentGuess = ''
+let gameStatus = GAME_STATUS.IN_PROGRESS
 let isSubmitting = false
 
 function readStats() {
   try { return JSON.parse(localStorage.getItem(STATS_KEY)) ?? { played: 0, wins: 0, streak: 0, bestStreak: 0 } }
   catch { return { played: 0, wins: 0, streak: 0, bestStreak: 0 } }
+}
+
+function resetKeyboard() {
+  keyboard.querySelectorAll('.key').forEach(button => button.classList.remove('key-correct', 'key-present', 'key-absent'))
 }
 
 function createBoard() {
@@ -52,7 +57,9 @@ function createKeyboard() {
   }))
 }
 
-function persistState() { saveGameState({ date: today, target: targetWord, guesses, currentGuess, status: gameStatus }) }
+function persistState() {
+  saveGameState({ date: today, mode: gameMode, target: targetWord, guesses, currentGuess, status: gameStatus })
+}
 
 function renderBoard(animatedRow = -1) {
   [...board.children].forEach((tile, tileIndex) => {
@@ -62,6 +69,7 @@ function renderBoard(animatedRow = -1) {
     const letters = submittedGuess ? [...submittedGuess.word] : rowIndex === guesses.length ? [...currentGuess] : []
     tile.textContent = letters[columnIndex] ?? ''
     tile.className = 'tile'
+    tile.style.removeProperty('--flip-delay')
     if (letters[columnIndex]) tile.classList.add('tile-filled')
     if (submittedGuess) {
       tile.classList.add(`tile-${submittedGuess.result[columnIndex]}`)
@@ -80,11 +88,41 @@ function updateKeyboard() {
     if (!statuses.has(letter) || priority[result[index]] > priority[statuses.get(letter)]) statuses.set(letter, result[index])
   }))
   keyboard.querySelectorAll('.key').forEach(button => {
-    const statusesForKey = [...button.dataset.key].map(letter => statuses.get(letter)).filter(Boolean)
-    const status = statusesForKey.sort((a, b) => priority[b] - priority[a])[0]
+    const status = [...button.dataset.key].map(letter => statuses.get(letter)).filter(Boolean).sort((a, b) => priority[b] - priority[a])[0]
     button.classList.remove('key-correct', 'key-present', 'key-absent')
     if (status) button.classList.add(`key-${status}`)
   })
+}
+
+function startNewRound(mode = gameMode) {
+  const previousTarget = targetWord
+  gameMode = mode
+  targetWord = gameMode === GAME_MODES.FREE ? getRandomWord() : getDailyWord()
+  if (gameMode === GAME_MODES.FREE && targetWord === previousTarget) targetWord = getRandomWord()
+  guesses = []
+  currentGuess = ''
+  gameStatus = GAME_STATUS.IN_PROGRESS
+  isSubmitting = false
+  localStorage.setItem(MODE_KEY, gameMode)
+  clearGameState()
+  resetKeyboard()
+  renderBoard()
+  closeModal('game-modal')
+  modeButton.textContent = gameMode === GAME_MODES.DAILY ? 'Dnevno' : 'Vježbanje'
+  modeButton.setAttribute('aria-label', gameMode === GAME_MODES.DAILY ? 'Prebaci na slobodnu igru' : 'Prebaci na dnevni izazov')
+}
+
+function restoreRound() {
+  const stored = loadGameState()
+  const validStoredRound = stored?.date === today && stored.mode === gameMode && typeof stored.target === 'string'
+  if (validStoredRound) {
+    targetWord = stored.target
+    guesses = Array.isArray(stored.guesses) ? stored.guesses : []
+    currentGuess = typeof stored.currentGuess === 'string' ? stored.currentGuess : ''
+    gameStatus = Object.values(GAME_STATUS).includes(stored.status) ? stored.status : GAME_STATUS.IN_PROGRESS
+  } else {
+    targetWord = gameMode === GAME_MODES.FREE ? getRandomWord() : getDailyWord()
+  }
 }
 
 function shakeRow() {
@@ -101,7 +139,7 @@ function showMessage(text) {
 }
 
 function addLetter(letter) {
-  if (gameStatus !== 'playing' || isSubmitting || [...currentGuess].length >= WORD_LENGTH) return
+  if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting || [...currentGuess].length >= WORD_LENGTH) return
   const normalized = letter.toUpperCase()
   if (!/^[A-ZČĆĐŠŽ]+$/.test(normalized) || [...currentGuess, ...normalized].length > WORD_LENGTH) return
   currentGuess += normalized
@@ -110,16 +148,17 @@ function addLetter(letter) {
 }
 
 function removeLetter() {
-  if (gameStatus !== 'playing' || isSubmitting) return
+  if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
   currentGuess = [...currentGuess].slice(0, -1).join('')
   renderBoard()
   persistState()
 }
 
 async function submitGuess() {
-  if (gameStatus !== 'playing' || isSubmitting) return
+  if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
   if ([...currentGuess].length !== WORD_LENGTH) { shakeRow(); showMessage('Riječ mora imati 5 slova'); return }
   if (!VALID_GUESSES.includes(currentGuess)) { shakeRow(); showMessage('Riječ nije u rječniku'); return }
+
   isSubmitting = true
   const word = currentGuess
   guesses.push({ word, result: evaluateGuess(word, targetWord) })
@@ -128,54 +167,76 @@ async function submitGuess() {
   updateKeyboard()
   persistState()
   await new Promise(resolve => window.setTimeout(resolve, 650 + (WORD_LENGTH - 1) * 150))
-  if (word === targetWord) gameStatus = 'won'
-  else if (guesses.length === MAX_GUESSES) gameStatus = 'lost'
+  gameStatus = word === targetWord ? GAME_STATUS.WON : guesses.length === MAX_GUESSES ? GAME_STATUS.LOST : GAME_STATUS.IN_PROGRESS
   isSubmitting = false
   persistState()
-  if (gameStatus !== 'playing') finishGame()
+  if (gameStatus !== GAME_STATUS.IN_PROGRESS) finishGame()
 }
 
 function finishGame() {
-  const stats = readStats()
-  stats.played += 1
-  if (gameStatus === 'won') {
-    stats.wins += 1
-    stats.streak += 1
-    stats.bestStreak = Math.max(stats.bestStreak, stats.streak)
-  } else stats.streak = 0
-  localStorage.setItem(STATS_KEY, JSON.stringify(stats))
-  openModal(stats)
-  if (gameStatus === 'won') {
+  if (gameMode === GAME_MODES.DAILY) {
+    const stats = readStats()
+    stats.played += 1
+    if (gameStatus === GAME_STATUS.WON) {
+      stats.wins += 1
+      stats.streak += 1
+      stats.bestStreak = Math.max(stats.bestStreak, stats.streak)
+    } else stats.streak = 0
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats))
+  }
+  openResultModal()
+  if (gameStatus === GAME_STATUS.WON && gameMode === GAME_MODES.DAILY) {
     const fire = () => confetti({ particleCount: 90, spread: 65, origin: { y: 0.62 } })
     fire(); window.setTimeout(fire, 420); window.setTimeout(fire, 820)
   }
 }
 
-function openModal(stats = readStats(), showResult = gameStatus !== 'playing') {
-  document.querySelector('#modal-title').textContent = showResult ? (gameStatus === 'won' ? 'BRAVO!' : 'KRAJ IGRE') : 'STATISTIKA'
-  document.querySelector('#modal-subtitle').textContent = showResult
-    ? (gameStatus === 'won' ? `Pogođeno iz ${guesses.length}/6 pokušaja` : `Tačna riječ je ${targetWord}`)
-    : 'Tvoj Wordle BA učinak'
+function openResultModal() {
+  const stats = readStats()
+  document.querySelector('#modal-title').textContent = gameStatus === GAME_STATUS.WON ? 'BRAVO!' : 'KRAJ IGRE'
+  document.querySelector('#modal-subtitle').textContent = gameStatus === GAME_STATUS.WON ? `Pogođeno iz ${guesses.length}/6 pokušaja` : `Tačna riječ je ${targetWord}`
   document.querySelector('#stat-played').textContent = stats.played
   document.querySelector('#stat-win-rate').textContent = `${stats.played ? Math.round((stats.wins / stats.played) * 100) : 0}%`
   document.querySelector('#stat-streak').textContent = stats.streak
   document.querySelector('#stat-best').textContent = stats.bestStreak
-  document.querySelector('#share-button').hidden = !showResult
-  modal.hidden = false
-  requestAnimationFrame(() => modal.classList.add('is-open'))
+  document.querySelector('#share-button').hidden = gameMode !== GAME_MODES.DAILY
+  document.querySelector('#new-game-button').hidden = gameMode !== GAME_MODES.FREE
+  document.querySelector('.countdown-wrap').hidden = gameMode !== GAME_MODES.DAILY
+  openModal('game-modal')
+}
+
+function openStatsModal() {
+  const stats = readStats()
+  document.querySelector('#modal-title').textContent = 'STATISTIKA'
+  document.querySelector('#modal-subtitle').textContent = 'Tvoj Wordle BA učinak'
+  document.querySelector('#stat-played').textContent = stats.played
+  document.querySelector('#stat-win-rate').textContent = `${stats.played ? Math.round((stats.wins / stats.played) * 100) : 0}%`
+  document.querySelector('#stat-streak').textContent = stats.streak
+  document.querySelector('#stat-best').textContent = stats.bestStreak
+  document.querySelector('#share-button').hidden = true
+  document.querySelector('#new-game-button').hidden = true
+  document.querySelector('.countdown-wrap').hidden = true
+  openModal('game-modal')
+}
+
+function openModal(id) {
+  const element = document.querySelector(`#${id}`)
+  element.hidden = false
+  requestAnimationFrame(() => element.classList.add('is-open'))
+}
+
+function closeModal(id) {
+  const element = document.querySelector(`#${id}`)
+  if (!element) return
+  element.classList.remove('is-open')
+  window.setTimeout(() => { element.hidden = true }, 220)
 }
 
 function shareResult() {
   const dateLabel = new Intl.DateTimeFormat('bs-BA').format(new Date(`${today}T12:00:00`))
   const rows = guesses.map(({ result }) => result.map(status => status === 'correct' ? '🟩' : status === 'present' ? '🟨' : '⬛').join('')).join('\n')
-  const text = `Wordle BA - ${dateLabel} ${gameStatus === 'won' ? `${guesses.length}/6` : 'X/6'}\n${rows}`
-  navigator.clipboard?.writeText(text).then(() => showToast('Kopirano u međuspremnik!')).catch(() => showToast(text))
-}
-
-function showToast(text) {
-  const toast = document.querySelector('#toast')
-  toast.textContent = text; toast.classList.add('is-visible')
-  window.setTimeout(() => toast.classList.remove('is-visible'), 2500)
+  const text = `Wordle BA - ${dateLabel} ${gameStatus === GAME_STATUS.WON ? `${guesses.length}/6` : 'X/6'}\n${rows}`
+  navigator.clipboard?.writeText(text).then(() => showMessage('Kopirano u međuspremnik!')).catch(() => showMessage(text))
 }
 
 function updateCountdown() {
@@ -186,10 +247,23 @@ function updateCountdown() {
 
 function handleKey(key) { if (key === 'ENTER') submitGuess(); else if (key === 'BACKSPACE') removeLetter(); else addLetter(key) }
 
-createBoard(); createKeyboard(); renderBoard(); updateKeyboard(); updateCountdown(); window.setInterval(updateCountdown, 1000)
+createBoard()
+createKeyboard()
+restoreRound()
+renderBoard()
+updateKeyboard()
+updateCountdown()
+window.setInterval(updateCountdown, 1000)
 keyboard.addEventListener('click', event => { const button = event.target.closest('.key'); if (button) handleKey(button.dataset.key) })
 document.addEventListener('keydown', event => { if (event.key === 'Enter') handleKey('ENTER'); else if (event.key === 'Backspace') handleKey('BACKSPACE'); else if (/^[a-zčćđšž]$/i.test(event.key)) handleKey(event.key) })
 document.querySelector('#share-button').addEventListener('click', shareResult)
-document.querySelector('#stats-button').addEventListener('click', () => openModal(readStats(), false))
-document.querySelector('#close-modal').addEventListener('click', () => { modal.classList.remove('is-open'); window.setTimeout(() => { modal.hidden = true }, 220) })
-if (gameStatus !== 'playing') openModal(readStats())
+document.querySelector('#stats-button').addEventListener('click', openStatsModal)
+document.querySelector('#new-game-button').addEventListener('click', () => startNewRound(GAME_MODES.FREE))
+document.querySelector('#reset-button').addEventListener('click', () => startNewRound(gameMode))
+document.querySelector('#close-modal').addEventListener('click', () => closeModal('game-modal'))
+document.querySelector('#help-button').addEventListener('click', () => openModal('help-modal'))
+document.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => closeModal(button.dataset.closeModal)))
+document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.addEventListener('click', event => { if (event.target === backdrop) closeModal(backdrop.id) }))
+modeButton.addEventListener('click', () => startNewRound(gameMode === GAME_MODES.DAILY ? GAME_MODES.FREE : GAME_MODES.DAILY))
+modeButton.textContent = gameMode === GAME_MODES.DAILY ? 'Dnevno' : 'Vježbanje'
+if (gameStatus !== GAME_STATUS.IN_PROGRESS) openResultModal()

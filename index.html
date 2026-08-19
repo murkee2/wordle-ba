@@ -9,9 +9,16 @@
   <body>
     <div id="app" class="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 sm:px-6">
       <header class="game-header">
-        <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
-        <h1>WORDLE BA</h1>
-        <button id="stats-button" class="header-icon" type="button" aria-label="Statistika">▥</button>
+        <div class="brand-group">
+          <h1><span>Wordle</span><b>BA</b></h1>
+          <a href="#" target="_blank" class="portal-badge">BosnaDLE <span>Portal ↗</span></a>
+        </div>
+        <button id="mode-button" class="mode-badge" type="button" aria-label="Prebaci na slobodnu igru">Dnevno</button>
+        <div class="header-actions">
+          <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
+          <button id="stats-button" class="header-icon" type="button" aria-label="Statistika">▥</button>
+          <button id="reset-button" class="header-icon" type="button" aria-label="Nova igra">↻</button>
+        </div>
       </header>
       <main class="game-main">
         <section id="board" aria-label="Tabla za pogađanje"></section>
@@ -37,6 +44,20 @@
         </div>
         <div class="countdown-wrap"><span>Sljedeća riječ za</span><strong id="countdown">00:00:00</strong></div>
         <button id="share-button" class="share-button" type="button">PODIJELI REZULTAT</button>
+        <button id="new-game-button" class="share-button secondary-button" type="button" hidden>IGRAJ PONOVO</button>
+      </section>
+    </div>
+    <div id="help-modal" class="modal-backdrop" hidden>
+      <section class="game-modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <button class="modal-close" type="button" data-close-modal="help-modal" aria-label="Zatvori">×</button>
+        <p class="modal-kicker">WORDLE BA</p>
+        <h2 id="help-title">Kako igrati</h2>
+        <p>Pogodi riječ od 5 slova u najviše 6 pokušaja.</p>
+        <div class="help-examples">
+          <div><strong class="example-tile tile-correct">Z</strong><span>Zeleno: slovo je na tačnom mjestu.</span></div>
+          <div><strong class="example-tile tile-present">U</strong><span>Žuto: slovo postoji, ali je na drugom mjestu.</span></div>
+          <div><strong class="example-tile tile-absent">B</strong><span>Sivo: slovo se ne nalazi u riječi.</span></div>
+        </div>
       </section>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

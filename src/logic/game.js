@@ -1,5 +1,16 @@
 const GAME_STATE_KEY = 'wordle-ba-game-state'
 
+export const GAME_STATUS = Object.freeze({
+  IN_PROGRESS: 'IN_PROGRESS',
+  WON: 'WON',
+  LOST: 'LOST',
+})
+
+export const GAME_MODES = Object.freeze({
+  DAILY: 'daily',
+  FREE: 'free',
+})
+
 const getStorage = (storage) => {
   if (storage) {
     return storage
