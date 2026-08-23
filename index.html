@@ -3,20 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#121213" />
+    <meta name="theme-color" content="#020617" />
     <meta name="description" content="WordleBA — Dnevna igra pogađanja bosanskih riječi od 5 slova. Testiraj svoje znanje svakog dana ili vježbaj u slobodnom modu." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>WordleBA — Bosanska riječ dana</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('wordle-ba-theme')
+          var theme = stored === 'light' || stored === 'dark' ? stored : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+          document.documentElement.setAttribute('data-theme', theme)
+        } catch { /* localStorage unavailable */ }
+      })()
+    </script>
   </head>
-  <body class="bg-zinc-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px] text-zinc-100 min-h-screen flex flex-col justify-between">
-    <div id="app" class="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 sm:px-6">
+  <body class="min-h-[100dvh] flex flex-col justify-between">
+    <div id="app" class="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 sm:px-6">
       <header class="game-header">
-        <a href="#" target="_blank" class="portal-badge px-2.5 py-1 text-xs font-semibold rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition">BosnaDLE <span class="text-emerald-400 text-[10px]">↗</span></a>
         <h1 class="brand-logo"><span>Wordle</span><b>BA</b></h1>
+        <div id="mode-switch" class="mode-switch" role="tablist" aria-label="Način igre">
+          <span id="mode-switch-thumb" class="mode-switch-thumb" aria-hidden="true"></span>
+          <button id="mode-daily" class="mode-switch-option" type="button" role="tab" data-mode="daily" aria-selected="true">Dnevno</button>
+          <button id="mode-free" class="mode-switch-option" type="button" role="tab" data-mode="free" aria-selected="false">Vježba</button>
+        </div>
         <div class="header-actions">
-          <button id="mode-button" class="mode-badge" type="button" aria-label="Prebaci na slobodnu igru">Dnevno</button>
-          <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
+          <button id="theme-toggle" class="header-icon" type="button" aria-label="Promijeni temu">🌙</button>
           <button id="stats-button" class="header-icon" type="button" aria-label="Statistika">▥</button>
+          <button id="help-button" class="header-icon" type="button" aria-label="Pomoć">?</button>
         </div>
       </header>
       <main class="game-main">

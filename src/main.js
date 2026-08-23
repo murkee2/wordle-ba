@@ -5,13 +5,17 @@ import { GAME_MODES, GAME_STATUS, evaluateGuess, loadGameState, saveGameState, c
 
 const STATS_KEY = 'wordle-ba-stats'
 const MODE_KEY = 'wordle-ba-mode'
+const THEME_KEY = 'wordle-ba-theme'
 const WORD_LENGTH = 5
 const MAX_GUESSES = 6
 const board = document.querySelector('#board')
 const keyboard = document.querySelector('#keyboard')
 const message = document.querySelector('#message')
 const modal = document.querySelector('#game-modal')
-const modeButton = document.querySelector('#mode-button')
+const modeSwitch = document.querySelector('#mode-switch')
+const modeDailyButton = document.querySelector('#mode-daily')
+const modeFreeButton = document.querySelector('#mode-free')
+const themeToggle = document.querySelector('#theme-toggle')
 const today = new Date().toISOString().slice(0, 10)
 
 let gameMode = localStorage.getItem(MODE_KEY) === GAME_MODES.FREE ? GAME_MODES.FREE : GAME_MODES.DAILY
@@ -30,12 +34,7 @@ function readStats() {
 
 function resetKeyboard() {
   Object.keys(keyboardLetterStatuses).forEach(letter => delete keyboardLetterStatuses[letter])
-  keyboard.querySelectorAll('.key').forEach(button => button.classList.remove(
-    'key-correct', 'key-present', 'key-absent',
-    'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600',
-    'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'text-white', 'font-bold', 'opacity-60',
-  ))
-  keyboard.querySelectorAll('.key').forEach(button => button.classList.add('bg-zinc-700/80', 'text-zinc-100', 'border-zinc-600'))
+  keyboard.querySelectorAll('.key').forEach(button => button.classList.remove('key-correct', 'key-present', 'key-absent'))
 }
 
 function createBoard() {
@@ -48,16 +47,17 @@ function createBoard() {
   }
 }
 
+const KEYBOARD_ROWS = [
+  ['E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P', 'Š'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Đ', 'Č'],
+  ['ENTER', 'C', 'V', 'B', 'N', 'M', 'Ć', 'Ž', 'BACKSPACE'],
+]
+
 function createKeyboard() {
-  const rows = [
-    ['Q', 'W', 'E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P', 'Š', 'Đ'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Č', 'Ć', 'Ž'],
-    ['ENTER', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE'],
-  ]
-  rows.forEach((row, rowIndex) => row.forEach(key => {
+  KEYBOARD_ROWS.forEach((row, rowIndex) => row.forEach(key => {
     const button = document.createElement('button')
     button.type = 'button'
-    button.className = `${key.length > 1 ? 'key key-wide' : 'key'} bg-zinc-700/80 text-zinc-100 border-zinc-600`
+    button.className = key.length > 1 ? 'key key-wide' : 'key'
     button.dataset.key = key
     button.textContent = key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? 'Enter' : key
     button.setAttribute('aria-label', key === 'BACKSPACE' ? 'Backspace' : button.textContent)
@@ -68,6 +68,9 @@ function createKeyboard() {
 function persistState() {
   saveGameState({ date: today, mode: gameMode, target: targetWord, guesses, currentGuess, status: gameStatus })
 }
+
+const FLIP_STAGGER_MS = 150
+const FLIP_DURATION_MS = 500
 
 function renderBoard(animatedRow = -1) {
   [...board.children].forEach((tile, tileIndex) => {
@@ -80,10 +83,14 @@ function renderBoard(animatedRow = -1) {
     tile.style.removeProperty('--flip-delay')
     if (letters[columnIndex]) tile.classList.add('tile-filled')
     if (submittedGuess) {
-      tile.classList.add(`tile-${submittedGuess.result[columnIndex]}`)
+      const status = submittedGuess.result[columnIndex]
       if (rowIndex === animatedRow) {
-        tile.style.setProperty('--flip-delay', `${columnIndex * 150}ms`)
+        const delay = columnIndex * FLIP_STAGGER_MS
+        tile.style.setProperty('--flip-delay', `${delay}ms`)
         tile.classList.add('is-flipping')
+        window.setTimeout(() => tile.classList.add(`tile-${status}`), delay + FLIP_DURATION_MS / 2)
+      } else {
+        tile.classList.add(`tile-${status}`)
       }
     }
   })
@@ -98,11 +105,10 @@ function updateKeyboard() {
   }))
   keyboard.querySelectorAll('.key').forEach(button => {
     const status = keyboardLetterStatuses[button.dataset.key]
-    button.classList.remove('key-correct', 'key-present', 'key-absent', 'bg-emerald-600', 'border-emerald-600', 'bg-amber-600', 'border-amber-600', 'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'text-white', 'font-bold', 'opacity-60')
-    button.classList.add('bg-zinc-700/80', 'text-zinc-100', 'border-zinc-600')
-    if (status === 'correct') button.classList.add('key-correct', 'bg-emerald-600', 'border-emerald-600', 'text-white', 'font-bold')
-    if (status === 'present') button.classList.add('key-present', 'bg-amber-600', 'border-amber-600', 'text-white', 'font-bold')
-    if (status === 'absent') button.classList.add('key-absent', 'bg-zinc-800', 'border-zinc-800', 'text-zinc-500', 'opacity-60')
+    button.classList.remove('key-correct', 'key-present', 'key-absent')
+    if (status === 'correct') button.classList.add('key-correct')
+    if (status === 'present') button.classList.add('key-present')
+    if (status === 'absent') button.classList.add('key-absent')
   })
 }
 
@@ -120,8 +126,14 @@ function startNewRound(mode = gameMode) {
   resetKeyboard()
   renderBoard()
   closeModal('game-modal')
-  modeButton.textContent = gameMode === GAME_MODES.DAILY ? 'Dnevno' : 'Vježbanje'
-  modeButton.setAttribute('aria-label', gameMode === GAME_MODES.DAILY ? 'Prebaci na slobodnu igru' : 'Prebaci na dnevni izazov')
+  updateModeSwitch()
+}
+
+function updateModeSwitch() {
+  const isDaily = gameMode === GAME_MODES.DAILY
+  modeSwitch.classList.toggle('is-free', !isDaily)
+  modeDailyButton.setAttribute('aria-selected', String(isDaily))
+  modeFreeButton.setAttribute('aria-selected', String(!isDaily))
 }
 
 function restoreRound() {
@@ -168,8 +180,8 @@ function removeLetter() {
 
 async function submitGuess() {
   if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
-  if ([...currentGuess].length !== WORD_LENGTH) { shakeRow(); showMessage('Riječ mora imati 5 slova'); return }
-  if (!VALID_GUESSES.includes(currentGuess)) { shakeRow(); showMessage('Riječ nije u rječniku'); return }
+  if ([...currentGuess].length !== WORD_LENGTH) { shakeRow(); vibrate([30, 50, 30]); showMessage('Riječ mora imati 5 slova'); return }
+  if (!VALID_GUESSES.includes(currentGuess)) { shakeRow(); vibrate([30, 50, 30]); showMessage('Riječ nije u rječniku'); return }
 
   isSubmitting = true
   const word = currentGuess
@@ -177,7 +189,7 @@ async function submitGuess() {
   currentGuess = ''
   renderBoard(guesses.length - 1)
   persistState()
-  await new Promise(resolve => window.setTimeout(resolve, 650 + (WORD_LENGTH - 1) * 150))
+  await new Promise(resolve => window.setTimeout(resolve, (WORD_LENGTH - 1) * FLIP_STAGGER_MS + FLIP_DURATION_MS))
   updateKeyboard()
   gameStatus = word === targetWord ? GAME_STATUS.WON : guesses.length === MAX_GUESSES ? GAME_STATUS.LOST : GAME_STATUS.IN_PROGRESS
   isSubmitting = false
@@ -197,9 +209,14 @@ function finishGame() {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats))
   }
   openResultModal()
-  if (gameStatus === GAME_STATUS.WON && gameMode === GAME_MODES.DAILY) {
-    const fire = () => confetti({ particleCount: 90, spread: 65, origin: { y: 0.62 } })
-    fire(); window.setTimeout(fire, 420); window.setTimeout(fire, 820)
+  if (gameStatus === GAME_STATUS.WON) {
+    vibrate([50, 50, 100])
+    if (gameMode === GAME_MODES.DAILY) {
+      const fire = () => confetti({ particleCount: 90, spread: 65, origin: { y: 0.62 } })
+      fire(); window.setTimeout(fire, 420); window.setTimeout(fire, 820)
+    }
+  } else {
+    vibrate([30, 50, 30])
   }
 }
 
@@ -261,7 +278,33 @@ function updateCountdown() {
   document.querySelector('#countdown').textContent = `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
 }
 
-function handleKey(key) { if (key === 'ENTER') submitGuess(); else if (key === 'BACKSPACE') removeLetter(); else addLetter(key) }
+function vibrate(pattern) { try { navigator?.vibrate?.(pattern) } catch { /* unsupported */ } }
+
+function handleKey(key) {
+  vibrate(10)
+  if (key === 'ENTER') submitGuess()
+  else if (key === 'BACKSPACE') removeLetter()
+  else addLetter(key)
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme)
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'light' ? '#f8fafc' : '#020617')
+  themeToggle.textContent = theme === 'light' ? '☀️' : '🌙'
+  themeToggle.setAttribute('aria-label', theme === 'light' ? 'Prebaci na tamnu temu' : 'Prebaci na svijetlu temu')
+}
+
+function initTheme() {
+  const stored = localStorage.getItem(THEME_KEY)
+  const theme = stored === 'light' || stored === 'dark' ? stored : (window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+  applyTheme(theme)
+}
+
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+  localStorage.setItem(THEME_KEY, next)
+  applyTheme(next)
+}
 
 createBoard()
 createKeyboard()
@@ -269,6 +312,7 @@ restoreRound()
 renderBoard()
 updateKeyboard()
 updateCountdown()
+initTheme()
 window.setInterval(updateCountdown, 1000)
 keyboard.addEventListener('click', event => { const button = event.target.closest('.key'); if (button) handleKey(button.dataset.key) })
 document.addEventListener('keydown', event => { if (event.key === 'Enter') handleKey('ENTER'); else if (event.key === 'Backspace') handleKey('BACKSPACE'); else if (/^[a-zčćđšž]$/i.test(event.key)) handleKey(event.key) })
@@ -279,6 +323,8 @@ document.querySelector('#close-modal').addEventListener('click', () => closeModa
 document.querySelector('#help-button').addEventListener('click', () => openModal('help-modal'))
 document.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => closeModal(button.dataset.closeModal)))
 document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.addEventListener('click', event => { if (event.target === backdrop) closeModal(backdrop.id) }))
-modeButton.addEventListener('click', () => startNewRound(gameMode === GAME_MODES.DAILY ? GAME_MODES.FREE : GAME_MODES.DAILY))
-modeButton.textContent = gameMode === GAME_MODES.DAILY ? 'Dnevno' : 'Vježbanje'
+modeDailyButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.DAILY) startNewRound(GAME_MODES.DAILY) })
+modeFreeButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.FREE) startNewRound(GAME_MODES.FREE) })
+themeToggle.addEventListener('click', toggleTheme)
+updateModeSwitch()
 if (gameStatus !== GAME_STATUS.IN_PROGRESS) openResultModal()
