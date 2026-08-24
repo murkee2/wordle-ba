@@ -17,6 +17,8 @@ const modeSwitch = document.querySelector('#mode-switch')
 const modeDailyButton = document.querySelector('#mode-daily')
 const modeFreeButton = document.querySelector('#mode-free')
 const themeToggle = document.querySelector('#theme-toggle')
+const inlineCountdown = document.querySelector('#inline-countdown')
+const inlineCountdownValue = document.querySelector('#inline-countdown-value')
 const today = new Date().toISOString().slice(0, 10)
 
 let gameMode = localStorage.getItem(MODE_KEY) === GAME_MODES.FREE ? GAME_MODES.FREE : GAME_MODES.DAILY
@@ -120,6 +122,20 @@ function updateKeyboard() {
   })
 }
 
+function switchMode(mode) {
+  gameMode = mode
+  localStorage.setItem(MODE_KEY, gameMode)
+  restoreRound()
+  isSubmitting = false
+  resetKeyboard()
+  renderBoard()
+  updateKeyboard()
+  updateModeSwitch()
+  updateInlineCountdown()
+  if (gameMode === GAME_MODES.FREE && gameStatus !== GAME_STATUS.IN_PROGRESS) openResultModal()
+  else closeModal('game-modal')
+}
+
 function startNewRound(mode = gameMode) {
   const previousTarget = targetWord
   gameMode = mode
@@ -130,11 +146,12 @@ function startNewRound(mode = gameMode) {
   gameStatus = GAME_STATUS.IN_PROGRESS
   isSubmitting = false
   localStorage.setItem(MODE_KEY, gameMode)
-  clearGameState()
+  clearGameState(gameMode)
   resetKeyboard()
   renderBoard()
   closeModal('game-modal')
   updateModeSwitch()
+  updateInlineCountdown()
 }
 
 function updateModeSwitch() {
@@ -145,7 +162,7 @@ function updateModeSwitch() {
 }
 
 function restoreRound() {
-  const stored = loadGameState()
+  const stored = loadGameState(gameMode)
   const validStoredRound = stored?.date === today && stored.mode === gameMode && typeof stored.target === 'string'
   if (validStoredRound) {
     targetWord = stored.target
@@ -154,6 +171,10 @@ function restoreRound() {
     gameStatus = Object.values(GAME_STATUS).includes(stored.status) ? stored.status : GAME_STATUS.IN_PROGRESS
   } else {
     targetWord = gameMode === GAME_MODES.FREE ? getRandomWord() : getDailyWord()
+    guesses = []
+    currentGuess = ''
+    gameStatus = GAME_STATUS.IN_PROGRESS
+    if (stored) clearGameState(gameMode)
   }
 }
 
@@ -173,12 +194,12 @@ function showMessage(text) {
 function addLetter(letter) {
   if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
   const normalized = letter.toLowerCase()
-  const currentGraphemes = toGraphemes(currentGuess) ?? []
-  if (currentGraphemes.length >= WORD_LENGTH) return
   const candidate = currentGuess + normalized
   // A physical keyboard sends single characters, so typing "d" then "ž" must
-  // merge into the digraph "dž" instead of occupying two tiles. We only
-  // accept the keystroke if the result still tokenizes cleanly as graphemes.
+  // merge into the digraph "dž" instead of occupying two tiles. We check the
+  // length of the MERGED result (not the pre-keystroke length) so that a
+  // digraph completing the final tile — e.g. "l" then "j" as the 5th letter
+  // — isn't rejected before it has a chance to merge into "lj".
   const candidateGraphemes = toGraphemes(candidate)
   if (!candidateGraphemes || candidateGraphemes.length > WORD_LENGTH) return
   currentGuess = candidate
@@ -226,6 +247,7 @@ function finishGame() {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats))
   }
   openResultModal()
+  updateInlineCountdown()
   if (gameStatus === GAME_STATUS.WON) {
     vibrate([50, 50, 100])
     if (gameMode === GAME_MODES.DAILY) {
@@ -289,10 +311,23 @@ function shareResult() {
   navigator.clipboard?.writeText(text).then(() => showMessage('Kopirano u međuspremnik!')).catch(() => showMessage(text))
 }
 
-function updateCountdown() {
+function formatCountdown(seconds) {
+  return `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+function secondsUntilNextWord() {
   const now = new Date(); const next = new Date(now); next.setHours(24, 0, 0, 0)
-  const seconds = Math.max(0, Math.floor((next - now) / 1000))
-  document.querySelector('#countdown').textContent = `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+  return Math.max(0, Math.floor((next - now) / 1000))
+}
+
+function updateCountdown() {
+  const text = formatCountdown(secondsUntilNextWord())
+  document.querySelector('#countdown').textContent = text
+  inlineCountdownValue.textContent = text
+}
+
+function updateInlineCountdown() {
+  inlineCountdown.hidden = !(gameMode === GAME_MODES.DAILY && gameStatus !== GAME_STATUS.IN_PROGRESS)
 }
 
 function vibrate(pattern) { try { navigator?.vibrate?.(pattern) } catch { /* unsupported */ } }
@@ -340,8 +375,9 @@ document.querySelector('#close-modal').addEventListener('click', () => closeModa
 document.querySelector('#help-button').addEventListener('click', () => openModal('help-modal'))
 document.querySelectorAll('[data-close-modal]').forEach(button => button.addEventListener('click', () => closeModal(button.dataset.closeModal)))
 document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.addEventListener('click', event => { if (event.target === backdrop) closeModal(backdrop.id) }))
-modeDailyButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.DAILY) startNewRound(GAME_MODES.DAILY) })
-modeFreeButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.FREE) startNewRound(GAME_MODES.FREE) })
+modeDailyButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.DAILY) switchMode(GAME_MODES.DAILY) })
+modeFreeButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.FREE) switchMode(GAME_MODES.FREE) })
 themeToggle.addEventListener('click', toggleTheme)
 updateModeSwitch()
+updateInlineCountdown()
 if (gameStatus !== GAME_STATUS.IN_PROGRESS) openResultModal()

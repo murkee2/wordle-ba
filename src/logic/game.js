@@ -1,6 +1,6 @@
 import { toGraphemes } from './graphemes.js'
 
-const GAME_STATE_KEY = 'wordle-ba-game-state'
+const GAME_STATE_KEY_PREFIX = 'wordle-ba-game-state'
 
 export const GAME_STATUS = Object.freeze({
   IN_PROGRESS: 'IN_PROGRESS',
@@ -60,6 +60,10 @@ export function evaluateGuess(guess, targetWord) {
   return result
 }
 
+function gameStateKey(mode) {
+  return mode ? `${GAME_STATE_KEY_PREFIX}-${mode}` : GAME_STATE_KEY_PREFIX
+}
+
 export function saveGameState(state, storage) {
   const activeStorage = getStorage(storage)
   if (!activeStorage) {
@@ -67,35 +71,35 @@ export function saveGameState(state, storage) {
   }
 
   try {
-    activeStorage.setItem(GAME_STATE_KEY, JSON.stringify(state))
+    activeStorage.setItem(gameStateKey(state?.mode), JSON.stringify(state))
     return true
   } catch {
     return false
   }
 }
 
-export function loadGameState(storage) {
+export function loadGameState(mode, storage) {
   const activeStorage = getStorage(storage)
   if (!activeStorage) {
     return null
   }
 
   try {
-    const serializedState = activeStorage.getItem(GAME_STATE_KEY)
+    const serializedState = activeStorage.getItem(gameStateKey(mode))
     return serializedState ? JSON.parse(serializedState) : null
   } catch {
     return null
   }
 }
 
-export function clearGameState(storage) {
+export function clearGameState(mode, storage) {
   const activeStorage = getStorage(storage)
   if (!activeStorage) {
     return false
   }
 
   try {
-    activeStorage.removeItem(GAME_STATE_KEY)
+    activeStorage.removeItem(gameStateKey(mode))
     return true
   } catch {
     return false
