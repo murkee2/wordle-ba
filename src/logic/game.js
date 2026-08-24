@@ -1,3 +1,5 @@
+import { toGraphemes } from './graphemes.js'
+
 const GAME_STATE_KEY = 'wordle-ba-game-state'
 
 export const GAME_STATUS = Object.freeze({
@@ -24,10 +26,10 @@ const getStorage = (storage) => {
 }
 
 export function evaluateGuess(guess, targetWord) {
-  const normalizedGuess = [...String(guess).toUpperCase()]
-  const normalizedTarget = [...String(targetWord).toUpperCase()]
+  const normalizedGuess = toGraphemes(guess)
+  const normalizedTarget = toGraphemes(targetWord)
 
-  if (normalizedGuess.length !== 5 || normalizedTarget.length !== 5) {
+  if (normalizedGuess?.length !== 5 || normalizedTarget?.length !== 5) {
     throw new RangeError('Guess and target word must contain exactly 5 letters.')
   }
 

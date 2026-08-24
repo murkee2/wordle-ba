@@ -1,7 +1,8 @@
 import './style.css'
 import confetti from 'canvas-confetti'
-import { VALID_GUESSES, getDailyWord, getRandomWord } from './data/words.js'
+import { allowedWords, getDailyWord, getRandomWord } from './data/words.js'
 import { GAME_MODES, GAME_STATUS, evaluateGuess, loadGameState, saveGameState, clearGameState } from './logic/game.js'
+import { toGraphemes } from './logic/graphemes.js'
 
 const STATS_KEY = 'wordle-ba-stats'
 const MODE_KEY = 'wordle-ba-mode'
@@ -47,20 +48,27 @@ function createBoard() {
   }
 }
 
+// Keys follow the physical Bosnian QWERTZ keyboard layout (minus q/w/x/y,
+// which aren't used in Bosnian words). Keys are lowercase Bosnian graphemes;
+// dž/lj/nj are two-character digraphs that behave as ONE key press (see
+// graphemes.js), placed at the end of their physical row.
 const KEYBOARD_ROWS = [
-  ['E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P', 'Š'],
-  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Đ', 'Č'],
-  ['ENTER', 'C', 'V', 'B', 'N', 'M', 'Ć', 'Ž', 'BACKSPACE'],
+  ['e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'š', 'đ'],
+  ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'č', 'ć'],
+  ['enter', 'c', 'v', 'b', 'n', 'm', 'ž', 'dž', 'lj', 'nj', 'backspace'],
 ]
+
+const KEY_LABELS = { backspace: '←', enter: '⏎' }
+const KEY_ARIA_LABELS = { backspace: 'Backspace', enter: 'Enter' }
 
 function createKeyboard() {
   KEYBOARD_ROWS.forEach((row, rowIndex) => row.forEach(key => {
     const button = document.createElement('button')
     button.type = 'button'
-    button.className = key.length > 1 ? 'key key-wide' : 'key'
+    button.className = key === 'enter' || key === 'backspace' ? 'key key-icon' : key.length > 1 ? 'key key-wide' : 'key'
     button.dataset.key = key
-    button.textContent = key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? 'Enter' : key
-    button.setAttribute('aria-label', key === 'BACKSPACE' ? 'Backspace' : button.textContent)
+    button.textContent = KEY_LABELS[key] ?? key
+    button.setAttribute('aria-label', KEY_ARIA_LABELS[key] ?? button.textContent)
     keyboard.querySelector(`[data-row="${rowIndex + 1}"]`).append(button)
   }))
 }
@@ -77,7 +85,7 @@ function renderBoard(animatedRow = -1) {
     const rowIndex = Math.floor(tileIndex / WORD_LENGTH)
     const columnIndex = tileIndex % WORD_LENGTH
     const submittedGuess = guesses[rowIndex]
-    const letters = submittedGuess ? [...submittedGuess.word] : rowIndex === guesses.length ? [...currentGuess] : []
+    const letters = submittedGuess ? toGraphemes(submittedGuess.word) : rowIndex === guesses.length ? toGraphemes(currentGuess) ?? [] : []
     tile.textContent = letters[columnIndex] ?? ''
     tile.className = 'tile'
     tile.style.removeProperty('--flip-delay')
@@ -97,7 +105,7 @@ function renderBoard(animatedRow = -1) {
 }
 
 function updateKeyboard() {
-  guesses.forEach(({ word, result }) => [...word].forEach((letter, index) => {
+  guesses.forEach(({ word, result }) => toGraphemes(word).forEach((letter, index) => {
     const status = result[index]
     if (!keyboardLetterStatuses[letter] || statusPriority[status] > statusPriority[keyboardLetterStatuses[letter]]) {
       keyboardLetterStatuses[letter] = status
@@ -163,25 +171,34 @@ function showMessage(text) {
 }
 
 function addLetter(letter) {
-  if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting || [...currentGuess].length >= WORD_LENGTH) return
-  const normalized = letter.toUpperCase()
-  if (!/^[A-ZČĆĐŠŽ]+$/.test(normalized) || [...currentGuess, ...normalized].length > WORD_LENGTH) return
-  currentGuess += normalized
+  if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
+  const normalized = letter.toLowerCase()
+  const currentGraphemes = toGraphemes(currentGuess) ?? []
+  if (currentGraphemes.length >= WORD_LENGTH) return
+  const candidate = currentGuess + normalized
+  // A physical keyboard sends single characters, so typing "d" then "ž" must
+  // merge into the digraph "dž" instead of occupying two tiles. We only
+  // accept the keystroke if the result still tokenizes cleanly as graphemes.
+  const candidateGraphemes = toGraphemes(candidate)
+  if (!candidateGraphemes || candidateGraphemes.length > WORD_LENGTH) return
+  currentGuess = candidate
   renderBoard()
   persistState()
 }
 
 function removeLetter() {
   if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
-  currentGuess = [...currentGuess].slice(0, -1).join('')
+  const graphemes = toGraphemes(currentGuess) ?? []
+  currentGuess = graphemes.slice(0, -1).join('')
   renderBoard()
   persistState()
 }
 
 async function submitGuess() {
   if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
-  if ([...currentGuess].length !== WORD_LENGTH) { shakeRow(); vibrate([30, 50, 30]); showMessage('Riječ mora imati 5 slova'); return }
-  if (!VALID_GUESSES.includes(currentGuess)) { shakeRow(); vibrate([30, 50, 30]); showMessage('Riječ nije u rječniku'); return }
+  const currentGraphemes = toGraphemes(currentGuess) ?? []
+  if (currentGraphemes.length !== WORD_LENGTH) { shakeRow(); vibrate([30, 50, 30]); showMessage('Riječ mora imati 5 slova'); return }
+  if (!allowedWords.includes(currentGuess)) { shakeRow(); vibrate([30, 50, 30]); showMessage('Riječ nije u rječniku'); return }
 
   isSubmitting = true
   const word = currentGuess
@@ -224,8 +241,8 @@ function openResultModal() {
   const stats = readStats()
   document.querySelector('#modal-title').textContent = gameStatus === GAME_STATUS.WON ? 'BRAVO!' : 'KRAJ IGRE'
   document.querySelector('#modal-subtitle').textContent = gameMode === GAME_MODES.FREE
-    ? `Riječ je bila: ${targetWord}`
-    : gameStatus === GAME_STATUS.WON ? `Pogođeno iz ${guesses.length}/6 pokušaja` : `Tačna riječ je ${targetWord}`
+    ? `Riječ je bila: ${targetWord.toUpperCase()}`
+    : gameStatus === GAME_STATUS.WON ? `Pogođeno iz ${guesses.length}/6 pokušaja` : `Tačna riječ je ${targetWord.toUpperCase()}`
   document.querySelector('#stat-played').textContent = stats.played
   document.querySelector('#stat-win-rate').textContent = `${stats.played ? Math.round((stats.wins / stats.played) * 100) : 0}%`
   document.querySelector('#stat-streak').textContent = stats.streak
@@ -282,8 +299,8 @@ function vibrate(pattern) { try { navigator?.vibrate?.(pattern) } catch { /* uns
 
 function handleKey(key) {
   vibrate(10)
-  if (key === 'ENTER') submitGuess()
-  else if (key === 'BACKSPACE') removeLetter()
+  if (key === 'enter') submitGuess()
+  else if (key === 'backspace') removeLetter()
   else addLetter(key)
 }
 
@@ -315,7 +332,7 @@ updateCountdown()
 initTheme()
 window.setInterval(updateCountdown, 1000)
 keyboard.addEventListener('click', event => { const button = event.target.closest('.key'); if (button) handleKey(button.dataset.key) })
-document.addEventListener('keydown', event => { if (event.key === 'Enter') handleKey('ENTER'); else if (event.key === 'Backspace') handleKey('BACKSPACE'); else if (/^[a-zčćđšž]$/i.test(event.key)) handleKey(event.key) })
+document.addEventListener('keydown', event => { if (event.key === 'Enter') handleKey('enter'); else if (event.key === 'Backspace') handleKey('backspace'); else if (/^[a-zčćđšž]$/i.test(event.key)) handleKey(event.key.toLowerCase()) })
 document.querySelector('#share-button').addEventListener('click', shareResult)
 document.querySelector('#stats-button').addEventListener('click', openStatsModal)
 document.querySelector('#new-game-button').addEventListener('click', () => startNewRound(GAME_MODES.FREE))

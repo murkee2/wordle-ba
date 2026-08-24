@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Word list pipeline: raw downloads and intermediate artifacts are
+# regenerable via `npm run words:build` and too large/noisy for git.
+data/raw
+data/normalized
+data/blacklists
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

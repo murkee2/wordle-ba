@@ -6,9 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "words:download": "node scripts/download_sources.mjs",
+    "words:parse": "node scripts/parse_sources.mjs",
+    "words:blacklists": "node scripts/build_blacklists.mjs",
+    "words:filter": "node scripts/filter_words.mjs",
+    "words:score": "node scripts/score_words.mjs",
+    "words:generate": "node scripts/generate_words.mjs",
+    "words:validate": "node scripts/validate_words.mjs",
+    "words:build": "npm run words:download && npm run words:parse && npm run words:blacklists && npm run words:filter && npm run words:score && npm run words:generate && npm run words:validate"
   },
   "devDependencies": {
+    "@msgpack/msgpack": "^3.1.3",
     "@tailwindcss/vite": "^4.3.3",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"
