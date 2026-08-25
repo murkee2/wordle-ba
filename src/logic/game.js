@@ -36,6 +36,8 @@ export function evaluateGuess(guess, targetWord) {
   const result = Array(5).fill('absent')
   const remainingLetters = new Map()
 
+  // First pass: mark exact matches, and tally the target's leftover letters
+  // (the ones not already consumed by an exact match) for the second pass.
   for (let index = 0; index < 5; index += 1) {
     if (normalizedGuess[index] === normalizedTarget[index]) {
       result[index] = 'correct'
@@ -45,6 +47,8 @@ export function evaluateGuess(guess, targetWord) {
     }
   }
 
+  // Second pass: mark "present" against the remaining tally so duplicate
+  // letters aren't over-counted (e.g. one extra guessed letter vs. one in target).
   for (let index = 0; index < 5; index += 1) {
     if (result[index] === 'correct') {
       continue
@@ -60,6 +64,7 @@ export function evaluateGuess(guess, targetWord) {
   return result
 }
 
+// Daily and free-play modes keep separate saved rounds, hence the per-mode key.
 function gameStateKey(mode) {
   return mode ? `${GAME_STATE_KEY_PREFIX}-${mode}` : GAME_STATE_KEY_PREFIX
 }

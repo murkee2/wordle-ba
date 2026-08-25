@@ -4,6 +4,8 @@ import { allowedWords, getDailyWord, getRandomWord } from './data/words.js'
 import { GAME_MODES, GAME_STATUS, evaluateGuess, loadGameState, saveGameState, clearGameState } from './logic/game.js'
 import { toGraphemes } from './logic/graphemes.js'
 
+// ---------- Constants & DOM references ----------
+
 const STATS_KEY = 'wordle-ba-stats'
 const MODE_KEY = 'wordle-ba-mode'
 const THEME_KEY = 'wordle-ba-theme'
@@ -21,6 +23,8 @@ const inlineCountdown = document.querySelector('#inline-countdown')
 const inlineCountdownValue = document.querySelector('#inline-countdown-value')
 const today = new Date().toISOString().slice(0, 10)
 
+// ---------- Mutable game state ----------
+
 let gameMode = localStorage.getItem(MODE_KEY) === GAME_MODES.FREE ? GAME_MODES.FREE : GAME_MODES.DAILY
 let targetWord = ''
 let guesses = []
@@ -29,6 +33,8 @@ let gameStatus = GAME_STATUS.IN_PROGRESS
 let isSubmitting = false
 const keyboardLetterStatuses = {}
 const statusPriority = { absent: 1, present: 2, correct: 3 }
+
+// ---------- Stats (localStorage) ----------
 
 function readStats() {
   try { return JSON.parse(localStorage.getItem(STATS_KEY)) ?? { played: 0, wins: 0, streak: 0, bestStreak: 0 } }
@@ -39,6 +45,8 @@ function resetKeyboard() {
   Object.keys(keyboardLetterStatuses).forEach(letter => delete keyboardLetterStatuses[letter])
   keyboard.querySelectorAll('.key').forEach(button => button.classList.remove('key-correct', 'key-present', 'key-absent'))
 }
+
+// ---------- Board & keyboard setup (DOM creation) ----------
 
 function createBoard() {
   board.replaceChildren()
@@ -78,6 +86,8 @@ function createKeyboard() {
 function persistState() {
   saveGameState({ date: today, mode: gameMode, target: targetWord, guesses, currentGuess, status: gameStatus })
 }
+
+// ---------- Rendering (board & keyboard) ----------
 
 const FLIP_STAGGER_MS = 150
 const FLIP_DURATION_MS = 500
@@ -121,6 +131,8 @@ function updateKeyboard() {
     if (status === 'absent') button.classList.add('key-absent')
   })
 }
+
+// ---------- Game mode & round lifecycle ----------
 
 function switchMode(mode) {
   gameMode = mode
@@ -191,6 +203,8 @@ function showMessage(text) {
   window.setTimeout(() => message.classList.remove('is-visible'), 1800)
 }
 
+// ---------- Player input (typing, backspace, submit) ----------
+
 function addLetter(letter) {
   if (gameStatus !== GAME_STATUS.IN_PROGRESS || isSubmitting) return
   const normalized = letter.toLowerCase()
@@ -234,6 +248,8 @@ async function submitGuess() {
   persistState()
   if (gameStatus !== GAME_STATUS.IN_PROGRESS) finishGame()
 }
+
+// ---------- End-of-game & modals ----------
 
 function finishGame() {
   if (gameMode === GAME_MODES.DAILY) {
@@ -304,12 +320,16 @@ function closeModal(id) {
   window.setTimeout(() => { element.hidden = true }, 220)
 }
 
+// ---------- Sharing results ----------
+
 function shareResult() {
   const dateLabel = new Intl.DateTimeFormat('bs-BA').format(new Date(`${today}T12:00:00`))
   const rows = guesses.map(({ result }) => result.map(status => status === 'correct' ? '🟩' : status === 'present' ? '🟨' : '⬛').join('')).join('\n')
   const text = `WordleBA (${dateLabel}) ${gameStatus === GAME_STATUS.WON ? `${guesses.length}/6` : 'X/6'}\n${rows}`
   navigator.clipboard?.writeText(text).then(() => showMessage('Kopirano u međuspremnik!')).catch(() => showMessage(text))
 }
+
+// ---------- Countdown to next daily word ----------
 
 function formatCountdown(seconds) {
   return `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
@@ -332,12 +352,16 @@ function updateInlineCountdown() {
 
 function vibrate(pattern) { try { navigator?.vibrate?.(pattern) } catch { /* unsupported */ } }
 
+// ---------- Input routing (keyboard clicks & physical keys) ----------
+
 function handleKey(key) {
   vibrate(10)
   if (key === 'enter') submitGuess()
   else if (key === 'backspace') removeLetter()
   else addLetter(key)
 }
+
+// ---------- Theme (light/dark) ----------
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
@@ -358,6 +382,8 @@ function toggleTheme() {
   applyTheme(next)
 }
 
+// ---------- Startup: build UI, restore saved round, wire up events ----------
+
 createBoard()
 createKeyboard()
 restoreRound()
@@ -366,8 +392,12 @@ updateKeyboard()
 updateCountdown()
 initTheme()
 window.setInterval(updateCountdown, 1000)
+
+// Virtual keyboard clicks and physical key presses both funnel into handleKey().
 keyboard.addEventListener('click', event => { const button = event.target.closest('.key'); if (button) handleKey(button.dataset.key) })
 document.addEventListener('keydown', event => { if (event.key === 'Enter') handleKey('enter'); else if (event.key === 'Backspace') handleKey('backspace'); else if (/^[a-zčćđšž]$/i.test(event.key)) handleKey(event.key.toLowerCase()) })
+
+// Header & modal controls
 document.querySelector('#share-button').addEventListener('click', shareResult)
 document.querySelector('#stats-button').addEventListener('click', openStatsModal)
 document.querySelector('#new-game-button').addEventListener('click', () => startNewRound(GAME_MODES.FREE))
@@ -378,6 +408,7 @@ document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.addEve
 modeDailyButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.DAILY) switchMode(GAME_MODES.DAILY) })
 modeFreeButton.addEventListener('click', () => { if (gameMode !== GAME_MODES.FREE) switchMode(GAME_MODES.FREE) })
 themeToggle.addEventListener('click', toggleTheme)
+
 updateModeSwitch()
 updateInlineCountdown()
 if (gameStatus !== GAME_STATUS.IN_PROGRESS) openResultModal()
