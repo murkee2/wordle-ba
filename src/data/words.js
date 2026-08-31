@@ -1,7 +1,7 @@
 // Očišćeno prema bosanskom pravopisnom rječniku bs_BA.
 // Zadržani su i pažljivo odabrani internacionalizmi i stručne posuđenice.
-// allowedWords: 7139 riječi.
-// answerWords: 3735 riječi.
+// allowedWords: 7130 riječi.
+// answerWords: 3732 riječi.
 // Bosanski digrafi dž, lj i nj računaju se kao jedno slovo.
 
 export const allowedWords = [
@@ -1710,6 +1710,7 @@ export const allowedWords = [
   "kapom",
   "kaput",
   "karat",
+  "karaš",
   "kargo",
   "karma",
   "karta",
@@ -3729,8 +3730,6 @@ export const allowedWords = [
   "pivar",
   "pivom",
   "pivot",
-  "pizdi",
-  "pizdu",
   "pizma",
   "pićem",
   "pišem",
@@ -9163,7 +9162,6 @@ export const answerWords = [
   "pivot",
   "pizma",
   "pićem",
-  "pička",
   "pišem",
   "pišeš",
   "pjega",
