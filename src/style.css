@@ -4,16 +4,15 @@
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  /* Dark theme (default) — unified slate scale for neutral/absent states */
-  --game-bg: #020617;
-  --game-bg-dotted: #27272a;
-  --game-border: #334155;
-  --game-surface: #1e293b;
-  --game-surface-hover: #334155;
-  --game-tile-empty: rgb(30 41 59 / 40%);
-  --game-tile-filled-border: #64748b;
-  --game-green: #047857;
-  --game-amber: #f59e0b;
+  /* Dark theme (default) — neutral zinc scale for neutral/absent states */
+  --game-bg: #101012;
+  --game-border: #3f3f46;
+  --game-surface: #202023;
+  --game-surface-hover: #2d2d31;
+  --game-tile-empty: rgb(39 39 42 / 40%);
+  --game-tile-filled-border: #71717a;
+  --game-green: #3a9c5f;
+  --game-amber: #cb9a2e;
   --game-amber-text: #1c1204;
   --game-absent: #3f3f46;
   --game-absent-text: #a1aebf;
@@ -21,7 +20,7 @@
   --game-text: #f8fafc;
   --game-text-muted: #a1a1a6;
   --game-text-soft: #d4d4d8;
-  --game-focus-ring: #38bdf8;
+  --game-focus-ring: #cb9a2e;
   --modal-bg: #18181b;
   --modal-backdrop: rgb(0 0 0 / 70%);
   --toast-bg: #f8fafc;
@@ -35,14 +34,13 @@
 
 :root[data-theme='light'] {
   --game-bg: #f8fafc;
-  --game-bg-dotted: #e2e8f0;
   --game-border: #cbd5e1;
   --game-surface: #ffffff;
   --game-surface-hover: #e2e8f0;
   --game-tile-empty: rgb(255 255 255 / 70%);
   --game-tile-filled-border: #94a3b8;
-  --game-green: #047857;
-  --game-amber: #b45309;
+  --game-green: #2f8a56;
+  --game-amber: #b8842a;
   --game-amber-text: #ffffff;
   --game-absent: #cbd5e1;
   --game-absent-text: #475569;
@@ -50,7 +48,7 @@
   --game-text: #0f172a;
   --game-text-muted: #64748b;
   --game-text-soft: #334155;
-  --game-focus-ring: #0284c7;
+  --game-focus-ring: #b8842a;
   --modal-bg: #ffffff;
   --modal-backdrop: rgb(15 23 42 / 45%);
   --toast-bg: #0f172a;
@@ -62,14 +60,13 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
     --game-bg: #f8fafc;
-    --game-bg-dotted: #e2e8f0;
     --game-border: #cbd5e1;
     --game-surface: #ffffff;
     --game-surface-hover: #e2e8f0;
     --game-tile-empty: rgb(255 255 255 / 70%);
     --game-tile-filled-border: #94a3b8;
-    --game-green: #059669;
-    --game-amber: #d97706;
+    --game-green: #2f8a56;
+    --game-amber: #b8842a;
     --game-amber-text: #ffffff;
     --game-absent: #cbd5e1;
     --game-absent-text: #64748b;
@@ -77,7 +74,7 @@
     --game-text: #0f172a;
     --game-text-muted: #64748b;
     --game-text-soft: #334155;
-    --game-focus-ring: #0284c7;
+    --game-focus-ring: #b8842a;
     --modal-bg: #ffffff;
     --modal-backdrop: rgb(15 23 42 / 45%);
     --toast-bg: #0f172a;
@@ -101,8 +98,6 @@ body {
 body {
   margin: 0;
   color: var(--game-text);
-  background-image: radial-gradient(var(--game-bg-dotted) 1px, transparent 1px);
-  background-size: 24px 24px;
   overscroll-behavior-y: none;
   transition: background-color 200ms ease, color 200ms ease;
 }

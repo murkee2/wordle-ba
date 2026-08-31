@@ -65,7 +65,7 @@ function createBoard() {
 const KEYBOARD_ROWS = [
   ['e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'š', 'đ'],
   ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'č', 'ć'],
-  ['enter', 'c', 'v', 'b', 'n', 'm', 'ž', 'dž', 'lj', 'nj', 'backspace'],
+  ['c', 'v', 'b', 'n', 'm', 'ž', 'dž', 'lj', 'nj', 'enter', 'backspace'],
 ]
 
 const KEY_LABELS = { backspace: '←', enter: '⏎' }
@@ -365,7 +365,7 @@ function handleKey(key) {
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'light' ? '#f8fafc' : '#020617')
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'light' ? '#f8fafc' : '#101012')
   themeToggle.textContent = theme === 'light' ? '☀️' : '🌙'
   themeToggle.setAttribute('aria-label', theme === 'light' ? 'Prebaci na tamnu temu' : 'Prebaci na svijetlu temu')
 }
