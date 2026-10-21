@@ -3,6 +3,10 @@ import confetti from 'canvas-confetti'
 import { allowedWords, getDailyWord, getRandomWord } from './data/words.js'
 import { GAME_MODES, GAME_STATUS, evaluateGuess, loadGameState, saveGameState, clearGameState } from './logic/game.js'
 import { toGraphemes } from './logic/graphemes.js'
+import { inject } from '@vercel/analytics'
+
+// Initialize Vercel Web Analytics
+inject()
 
 // ---------- Constants & DOM references ----------
 
